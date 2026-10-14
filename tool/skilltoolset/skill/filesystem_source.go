@@ -35,12 +35,12 @@ import (
 // Expected layout example:
 //
 //	skill-1/
-//	         SKILL.md
-//	         assets/
+//		 SKILL.md
+//		 assets/
 //	skill-2/
-//	         SKILL.md
-//	         references/
-//	         scripts/
+//		 SKILL.md
+//		 references/
+//		 scripts/
 func NewFileSystemSource(filesystem fs.FS) Source {
 	return &fileSystemSource{filesystem: filesystem}
 }
@@ -120,11 +120,13 @@ func (f *fileSystemSource) LoadInstructions(ctx context.Context, name string) (s
 // check alone never sees the real target.
 //
 // This requires the underlying filesystem to implement fs.ReadLinkFS
-// (added in Go 1.23; os.DirFS satisfies it). A filesystem that does not --
-// such as the in-memory filesystems common in tests -- has no notion of
-// symlinks at all, so it cannot contain one to escape through; this follows
-// the same convention as fs.Lstat itself, which falls back to the ordinary,
-// symlink-following Stat when ReadLinkFS is unavailable.
+// (added in Go 1.25; os.DirFS and os.Root.FS satisfy it, and so does
+// testing/fstest.MapFS since the same release). A filesystem that predates
+// that interface, or simply never implements it, has no way to report a
+// symlink without following it, so it is treated as having none to escape
+// through; this follows the same convention as fs.Lstat itself, which
+// falls back to the ordinary, symlink-following Stat when ReadLinkFS is
+// unavailable.
 func (f *fileSystemSource) rejectSymlinkPath(p string) error {
 	rlfs, ok := f.filesystem.(fs.ReadLinkFS)
 	if !ok {
